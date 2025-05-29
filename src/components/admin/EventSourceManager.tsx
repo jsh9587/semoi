@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,13 @@ export const EventSourceManager = () => {
       category: "미술/전시",
       status: "active",
       lastCrawled: "2025-01-20 14:30",
-      successRate: 98
+      successRate: 98,
+      titleSelector: ".event-title",
+      priceSelector: ".price",
+      linkSelector: ".event-link",
+      imageSelector: ".event-image",
+      periodSelector: ".event-period",
+      periodDataAttr: ""
     },
     {
       id: 2,
@@ -28,7 +33,13 @@ export const EventSourceManager = () => {
       category: "박물관",
       status: "active",
       lastCrawled: "2025-01-20 14:25",
-      successRate: 95
+      successRate: 95,
+      titleSelector: ".event-title",
+      priceSelector: ".price",
+      linkSelector: ".event-link",
+      imageSelector: ".event-image",
+      periodSelector: ".event-period",
+      periodDataAttr: ""
     },
     {
       id: 3,
@@ -37,7 +48,13 @@ export const EventSourceManager = () => {
       category: "공연/음악",
       status: "error",
       lastCrawled: "2025-01-20 13:45",
-      successRate: 87
+      successRate: 87,
+      titleSelector: ".event-title",
+      priceSelector: ".price",
+      linkSelector: ".event-link",
+      imageSelector: ".event-image",
+      periodSelector: ".event-period",
+      periodDataAttr: ""
     },
     {
       id: 4,
@@ -46,7 +63,13 @@ export const EventSourceManager = () => {
       category: "클럽/파티",
       status: "pending",
       lastCrawled: "-",
-      successRate: 0
+      successRate: 0,
+      titleSelector: ".event-title",
+      priceSelector: ".price",
+      linkSelector: ".event-link",
+      imageSelector: ".event-image",
+      periodSelector: ".event-period",
+      periodDataAttr: ""
     }
   ]);
 
@@ -54,7 +77,13 @@ export const EventSourceManager = () => {
   const [newSource, setNewSource] = useState({
     name: "",
     url: "",
-    category: ""
+    category: "",
+    titleSelector: "",
+    priceSelector: "",
+    linkSelector: "",
+    imageSelector: "",
+    periodSelector: "",
+    periodDataAttr: ""
   });
 
   const handleAddSource = () => {
@@ -67,7 +96,7 @@ export const EventSourceManager = () => {
         lastCrawled: "-",
         successRate: 0
       }]);
-      setNewSource({ name: "", url: "", category: "" });
+      setNewSource({ name: "", url: "", category: "", titleSelector: "", priceSelector: "", linkSelector: "", imageSelector: "", periodSelector: "", periodDataAttr: "" });
       setIsAddDialogOpen(false);
     }
   };
@@ -82,6 +111,24 @@ export const EventSourceManager = () => {
         return <Badge variant="secondary">대기중</Badge>;
       default:
         return <Badge variant="outline">알 수 없음</Badge>;
+    }
+  };
+
+  const handleCrawl = async (url: string, titleSelector: string, priceSelector: string, linkSelector: string, imageSelector: string, periodSelector: string, periodDataAttr: string) => {
+    const params = new URLSearchParams({ url, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr });
+    const res = await fetch(`http://localhost:3001/api/crawl?${params.toString()}`);
+    const data = await res.json();
+    if (data.titles || data.prices || data.links || data.images || data.periods) {
+      alert(
+        '크롤링 결과:\n' +
+        '타이틀: ' + (data.titles ? data.titles.join(', ') : '-') + '\n' +
+        '가격: ' + (data.prices ? data.prices.join(', ') : '-') + '\n' +
+        '링크: ' + (data.links ? data.links.join(', ') : '-') + '\n' +
+        '이미지: ' + (data.images ? data.images.join(', ') : '-') + '\n' +
+        '이벤트기간: ' + (data.periods ? data.periods.join(', ') : '-')
+      );
+    } else {
+      alert('크롤링 실패: ' + (data.error || '알 수 없음'));
     }
   };
 
@@ -143,6 +190,60 @@ export const EventSourceManager = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="titleSelector">타이틀 CSS 선택자</Label>
+                <Input
+                  id="titleSelector"
+                  value={newSource.titleSelector}
+                  onChange={(e) => setNewSource({...newSource, titleSelector: e.target.value})}
+                  placeholder="예: .event-title"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="priceSelector">가격 CSS 선택자</Label>
+                <Input
+                  id="priceSelector"
+                  value={newSource.priceSelector}
+                  onChange={(e) => setNewSource({...newSource, priceSelector: e.target.value})}
+                  placeholder="예: .price"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="linkSelector">링크 CSS 선택자</Label>
+                <Input
+                  id="linkSelector"
+                  value={newSource.linkSelector}
+                  onChange={(e) => setNewSource({...newSource, linkSelector: e.target.value})}
+                  placeholder="예: .event-link"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="imageSelector">이미지 CSS 선택자</Label>
+                <Input
+                  id="imageSelector"
+                  value={newSource.imageSelector}
+                  onChange={(e) => setNewSource({...newSource, imageSelector: e.target.value})}
+                  placeholder="예: .event-image"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="periodSelector">이벤트기간 CSS 선택자</Label>
+                <Input
+                  id="periodSelector"
+                  value={newSource.periodSelector}
+                  onChange={(e) => setNewSource({...newSource, periodSelector: e.target.value})}
+                  placeholder="예: .event-period 또는 a.btn-link"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="periodDataAttr">이벤트기간 data attribute (선택)</Label>
+                <Input
+                  id="periodDataAttr"
+                  value={newSource.periodDataAttr}
+                  onChange={(e) => setNewSource({...newSource, periodDataAttr: e.target.value})}
+                  placeholder="예: data-href"
+                />
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -201,7 +302,7 @@ export const EventSourceManager = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleCrawl(source.url, source.titleSelector, source.priceSelector, source.linkSelector, source.imageSelector, source.periodSelector, source.periodDataAttr)}>
                         <RefreshCw className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="sm">
