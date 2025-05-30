@@ -60,10 +60,15 @@ const crawlAndSaveRouter = require('./crawl_and_save');
 const eventSourcesApi = require('./event_sources_api');
 const crawledEventsApi = require('./crawled_events_api');
 const puppeteerCrawlRouter = require('./puppeteer_crawl');
+const settingsApi = require('./settings_api');
 app.use('/api', crawlAndSaveRouter);
 app.use('/api', eventSourcesApi);
 app.use('/api', crawledEventsApi);
 app.use('/api', puppeteerCrawlRouter);
+app.use('/api', settingsApi);
+
+const { startCrawlingJob } = require('./cron');
+startCrawlingJob();
 
 app.listen(3001, () => {
   console.log('Express 서버가 3001번 포트에서 실행 중!');

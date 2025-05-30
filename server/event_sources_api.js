@@ -14,11 +14,11 @@ router.get('/event-sources', async (req, res) => {
 
 // 이벤트 소스 추가
 router.post('/event-sources', async (req, res) => {
-  const { name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr } = req.body;
+  const { name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector } = req.body;
   try {
     const [result] = await pool.query(
-      `INSERT INTO event_sources (name, url, category, title_selector, price_selector, link_selector, image_selector, period_selector, period_data_attr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr]
+      `INSERT INTO event_sources (name, url, category, title_selector, price_selector, link_selector, image_selector, period_selector, period_data_attr, time_selector, location_selector, desc_selector) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector]
     );
     res.json({ id: result.insertId });
   } catch (err) {
@@ -29,11 +29,11 @@ router.post('/event-sources', async (req, res) => {
 // 이벤트 소스 수정
 router.put('/event-sources/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr } = req.body;
+  const { name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector } = req.body;
   try {
     await pool.query(
-      `UPDATE event_sources SET name=?, url=?, category=?, title_selector=?, price_selector=?, link_selector=?, image_selector=?, period_selector=?, period_data_attr=? WHERE id=?`,
-      [name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, id]
+      `UPDATE event_sources SET name=?, url=?, category=?, title_selector=?, price_selector=?, link_selector=?, image_selector=?, period_selector=?, period_data_attr=?, time_selector=?, location_selector=?, desc_selector=? WHERE id=?`,
+      [name, url, category, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector, id]
     );
     res.json({ success: true });
   } catch (err) {

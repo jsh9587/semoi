@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,67 +7,81 @@ import { Textarea } from "@/components/ui/textarea";
 import { Check, X, Edit, Calendar, MapPin, Clock, User } from "lucide-react";
 
 export const EventApproval = () => {
-  const [pendingEvents, setPendingEvents] = useState([
-    {
-      id: 1,
-      title: "현대미술 특별전: 디지털 아트의 미래",
-      description: "최신 디지털 아트 작품들을 만나볼 수 있는 특별 전시회입니다. VR과 AI를 활용한 혁신적인 작품들이 전시됩니다.",
-      date: "2025-02-15",
-      time: "10:00",
-      location: "서울시립미술관 본관",
-      organizer: "서울시립미술관",
-      source: "https://sema.seoul.go.kr/kr/exhibition",
-      category: "미술/전시",
-      price: "성인 5,000원",
-      image: "/placeholder.svg",
-      status: "pending"
-    },
-    {
-      id: 2,
-      title: "클래식 음악회: 베토벤 교향곡 9번",
-      description: "서울시향이 연주하는 베토벤의 교향곡 9번 '합창'을 감상할 수 있는 특별한 기회입니다.",
-      date: "2025-02-20",
-      time: "19:30",
-      location: "세종문화회관 대극장",
-      organizer: "서울시향",
-      source: "https://sejongpac.or.kr",
-      category: "공연/음악",
-      price: "R석 80,000원",
-      image: "/placeholder.svg",
-      status: "pending"
-    },
-    {
-      id: 3,
-      title: "홍대 일렉트로닉 파티",
-      description: "최고의 DJ들이 참여하는 일렉트로닉 음악 파티입니다. 밤새도록 춤추며 즐겨보세요!",
-      date: "2025-02-22",
-      time: "22:00",
-      location: "홍대 클럽 오케이",
-      organizer: "클럽 오케이",
-      source: "https://hongdae-club.com",
-      category: "클럽/파티",
-      price: "입장료 20,000원",
-      image: "/placeholder.svg",
-      status: "pending"
-    }
-  ]);
-
+  const [pendingEvents, setPendingEvents] = useState([]);
   const [editingEvent, setEditingEvent] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
 
-  const handleApprove = (eventId: number) => {
-    setPendingEvents(events => 
-      events.filter(event => event.id !== eventId)
-    );
+  // 승인 대기 이벤트 목록 불러오기
+  const fetchPendingEvents = async () => {
+    const res = await fetch("http://localhost:3001/api/crawled-events?status=pending");
+    const data = await res.json();
+    setPendingEvents(data);
+  };
+  useEffect(() => { fetchPendingEvents(); }, []);
+
+  // 승인
+  const handleApprove = async (eventId: number) => {
+    const event = pendingEvents.find(ev => ev.id === eventId);
+    if (!event) return;
+    await fetch(`http://localhost:3001/api/crawled-events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...event, status: "approved" })
+    });
+    fetchPendingEvents();
   };
 
-  const handleReject = (eventId: number) => {
-    setPendingEvents(events => 
-      events.filter(event => event.id !== eventId)
-    );
+  // 거절
+  const handleReject = async (eventId: number) => {
+    const event = pendingEvents.find(ev => ev.id === eventId);
+    if (!event) return;
+    await fetch(`http://localhost:3001/api/crawled-events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...event, status: "rejected" })
+    });
+    fetchPendingEvents();
   };
 
+  // 수정 모드 진입
   const handleEdit = (eventId: number) => {
     setEditingEvent(editingEvent === eventId ? null : eventId);
+    const event = pendingEvents.find(ev => ev.id === eventId);
+    setEditForm(event || {});
+  };
+
+  // 전체 승인
+  const handleApproveAll = async () => {
+    for (const event of pendingEvents) {
+      if (!event.title || !event.link) {
+        alert(`필수값(제목, 링크)이 비어있는 이벤트가 있습니다. 먼저 수정해 주세요.`);
+        return;
+      }
+    }
+    await Promise.all(pendingEvents.map(event =>
+      fetch(`http://localhost:3001/api/crawled-events/${event.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...event, status: "approved" })
+      })
+    ));
+    fetchPendingEvents();
+  };
+
+  // 수정 저장
+  const handleSaveEdit = async () => {
+    if (!editingEvent) return;
+    if (!editForm.title || !editForm.link) {
+      alert("제목과 링크는 필수입니다.");
+      return;
+    }
+    await fetch(`http://localhost:3001/api/crawled-events/${editingEvent}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...editForm, status: "pending" })
+    });
+    setEditingEvent(null);
+    fetchPendingEvents();
   };
 
   return (
@@ -81,6 +94,11 @@ export const EventApproval = () => {
 
       {/* Pending Events */}
       <div className="space-y-4">
+        <div className="flex justify-end">
+          <Button variant="default" onClick={handleApproveAll} disabled={pendingEvents.length === 0}>
+            전체 승인
+          </Button>
+        </div>
         {pendingEvents.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
@@ -137,31 +155,47 @@ export const EventApproval = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">제목</label>
-                      <Input defaultValue={event.title} />
+                      <Input value={editForm.title || ""} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">설명</label>
-                      <Textarea defaultValue={event.description} rows={3} />
+                      <Textarea value={editForm.description || ""} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">날짜</label>
-                        <Input defaultValue={event.date} />
+                        <Input value={editForm.date || ""} onChange={e => setEditForm(f => ({ ...f, date: e.target.value }))} />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">시간</label>
-                        <Input defaultValue={event.time} />
+                        <Input value={editForm.time || ""} onChange={e => setEditForm(f => ({ ...f, time: e.target.value }))} />
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">장소</label>
-                      <Input defaultValue={event.location} />
+                      <Input value={editForm.location || ""} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">카테고리</label>
+                      <Input value={editForm.category || ""} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">가격</label>
+                      <Input value={editForm.price || ""} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">이미지</label>
+                      <Input value={editForm.image || ""} onChange={e => setEditForm(f => ({ ...f, image: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">링크</label>
+                      <Input value={editForm.link || ""} onChange={e => setEditForm(f => ({ ...f, link: e.target.value }))} />
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" onClick={() => setEditingEvent(null)}>
                         취소
                       </Button>
-                      <Button onClick={() => setEditingEvent(null)}>
+                      <Button onClick={handleSaveEdit}>
                         저장
                       </Button>
                     </div>
@@ -169,7 +203,6 @@ export const EventApproval = () => {
                 ) : (
                   <div className="space-y-4">
                     <p className="text-gray-700">{event.description}</p>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-500" />
@@ -184,7 +217,6 @@ export const EventApproval = () => {
                         <span>{event.location}</span>
                       </div>
                     </div>
-
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <div className="text-sm space-y-1">
                         <div><strong>가격:</strong> {event.price}</div>

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Globe, CheckCircle, XCircle, RefreshCw, Trash2, Edit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 export const EventSourceManager = () => {
   // DB 연동용 상태
@@ -23,7 +24,10 @@ export const EventSourceManager = () => {
     linkSelector: "",
     imageSelector: "",
     periodSelector: "",
-    periodDataAttr: ""
+    periodDataAttr: "",
+    timeSelector: "",
+    locationSelector: "",
+    descSelector: ""
   });
   const [editSource, setEditSource] = useState(null);
 
@@ -51,7 +55,7 @@ export const EventSourceManager = () => {
     });
     if (res.ok) {
       setIsAddDialogOpen(false);
-      setNewSource({ name: "", url: "", category: "", titleSelector: "", priceSelector: "", linkSelector: "", imageSelector: "", periodSelector: "", periodDataAttr: "" });
+      setNewSource({ name: "", url: "", category: "", titleSelector: "", priceSelector: "", linkSelector: "", imageSelector: "", periodSelector: "", periodDataAttr: "", timeSelector: "", locationSelector: "", descSelector: "" });
       fetchSources();
     }
   };
@@ -90,7 +94,10 @@ export const EventSourceManager = () => {
         linkSelector: source.link_selector,
         imageSelector: source.image_selector,
         periodSelector: source.period_selector,
-        periodDataAttr: source.period_data_attr
+        periodDataAttr: source.period_data_attr,
+        timeSelector: source.time_selector,
+        locationSelector: source.location_selector,
+        descSelector: source.desc_selector
       })
     });
     const data = await res.json();
@@ -135,95 +142,81 @@ export const EventSourceManager = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">소스 이름</Label>
-                <Input
-                  id="name"
-                  value={newSource.name}
-                  onChange={(e) => setNewSource({...newSource, name: e.target.value})}
-                  placeholder="예: 서울시립미술관"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 기본 정보 */}
+                <div>
+                  <Label htmlFor="name">소스 이름</Label>
+                  <Input id="name" value={newSource.name} onChange={(e) => setNewSource({...newSource, name: e.target.value})} placeholder="예: 서울시립미술관" />
+                </div>
+                <div>
+                  <Label htmlFor="url">URL</Label>
+                  <Input id="url" value={newSource.url} onChange={(e) => setNewSource({...newSource, url: e.target.value})} placeholder="https://example.com/events" />
+                </div>
+                <div>
+                  <Label htmlFor="category">카테고리</Label>
+                  <Select onValueChange={(value) => setNewSource({...newSource, category: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="카테고리 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="미술/전시">미술/전시</SelectItem>
+                      <SelectItem value="공연/음악">공연/음악</SelectItem>
+                      <SelectItem value="박물관">박물관</SelectItem>
+                      <SelectItem value="클럽/파티">클럽/파티</SelectItem>
+                      <SelectItem value="교육/세미나">교육/세미나</SelectItem>
+                      <SelectItem value="스포츠">스포츠</SelectItem>
+                      <SelectItem value="기타">기타</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* 필수 선택자 */}
+                <div>
+                  <Label htmlFor="titleSelector">타이틀 CSS 선택자</Label>
+                  <Input id="titleSelector" value={newSource.titleSelector} onChange={(e) => setNewSource({...newSource, titleSelector: e.target.value})} placeholder="예: .event-title" />
+                </div>
+                <div>
+                  <Label htmlFor="linkSelector">링크 CSS 선택자</Label>
+                  <Input id="linkSelector" value={newSource.linkSelector} onChange={(e) => setNewSource({...newSource, linkSelector: e.target.value})} placeholder="예: .event-link" />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="url">URL</Label>
-                <Input
-                  id="url"
-                  value={newSource.url}
-                  onChange={(e) => setNewSource({...newSource, url: e.target.value})}
-                  placeholder="https://example.com/events"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="category">카테고리</Label>
-                <Select onValueChange={(value) => setNewSource({...newSource, category: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="카테고리 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="미술/전시">미술/전시</SelectItem>
-                    <SelectItem value="공연/음악">공연/음악</SelectItem>
-                    <SelectItem value="박물관">박물관</SelectItem>
-                    <SelectItem value="클럽/파티">클럽/파티</SelectItem>
-                    <SelectItem value="교육/세미나">교육/세미나</SelectItem>
-                    <SelectItem value="스포츠">스포츠</SelectItem>
-                    <SelectItem value="기타">기타</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="titleSelector">타이틀 CSS 선택자</Label>
-                <Input
-                  id="titleSelector"
-                  value={newSource.titleSelector}
-                  onChange={(e) => setNewSource({...newSource, titleSelector: e.target.value})}
-                  placeholder="예: .event-title"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priceSelector">가격 CSS 선택자</Label>
-                <Input
-                  id="priceSelector"
-                  value={newSource.priceSelector}
-                  onChange={(e) => setNewSource({...newSource, priceSelector: e.target.value})}
-                  placeholder="예: .price"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="linkSelector">링크 CSS 선택자</Label>
-                <Input
-                  id="linkSelector"
-                  value={newSource.linkSelector}
-                  onChange={(e) => setNewSource({...newSource, linkSelector: e.target.value})}
-                  placeholder="예: .event-link"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="imageSelector">이미지 CSS 선택자</Label>
-                <Input
-                  id="imageSelector"
-                  value={newSource.imageSelector}
-                  onChange={(e) => setNewSource({...newSource, imageSelector: e.target.value})}
-                  placeholder="예: .event-image"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="periodSelector">이벤트기간 CSS 선택자</Label>
-                <Input
-                  id="periodSelector"
-                  value={newSource.periodSelector}
-                  onChange={(e) => setNewSource({...newSource, periodSelector: e.target.value})}
-                  placeholder="예: .event-period 또는 a.btn-link"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="periodDataAttr">이벤트기간 data attribute (선택)</Label>
-                <Input
-                  id="periodDataAttr"
-                  value={newSource.periodDataAttr}
-                  onChange={(e) => setNewSource({...newSource, periodDataAttr: e.target.value})}
-                  placeholder="예: data-href"
-                />
-              </div>
+              {/* 추가 선택자: 아코디언으로 접기/펼치기 */}
+              <Accordion type="single" collapsible className="mt-4">
+                <AccordionItem value="more">
+                  <AccordionTrigger>추가 선택자 입력 (가격, 이미지, 기간, 시간, 장소, 설명 등)</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="priceSelector">가격 CSS 선택자</Label>
+                        <Input id="priceSelector" value={newSource.priceSelector} onChange={(e) => setNewSource({...newSource, priceSelector: e.target.value})} placeholder="예: .price" />
+                      </div>
+                      <div>
+                        <Label htmlFor="imageSelector">이미지 CSS 선택자</Label>
+                        <Input id="imageSelector" value={newSource.imageSelector} onChange={(e) => setNewSource({...newSource, imageSelector: e.target.value})} placeholder="예: .event-image" />
+                      </div>
+                      <div>
+                        <Label htmlFor="periodSelector">이벤트기간 CSS 선택자</Label>
+                        <Input id="periodSelector" value={newSource.periodSelector} onChange={(e) => setNewSource({...newSource, periodSelector: e.target.value})} placeholder="예: .event-period 또는 a.btn-link" />
+                      </div>
+                      <div>
+                        <Label htmlFor="periodDataAttr">이벤트기간 data attribute (선택)</Label>
+                        <Input id="periodDataAttr" value={newSource.periodDataAttr} onChange={(e) => setNewSource({...newSource, periodDataAttr: e.target.value})} placeholder="예: data-href" />
+                      </div>
+                      <div>
+                        <Label htmlFor="timeSelector">시간 CSS 선택자</Label>
+                        <Input id="timeSelector" value={newSource.timeSelector} onChange={(e) => setNewSource({...newSource, timeSelector: e.target.value})} placeholder="예: .event-time" />
+                      </div>
+                      <div>
+                        <Label htmlFor="locationSelector">장소 CSS 선택자</Label>
+                        <Input id="locationSelector" value={newSource.locationSelector} onChange={(e) => setNewSource({...newSource, locationSelector: e.target.value})} placeholder="예: .event-location" />
+                      </div>
+                      <div>
+                        <Label htmlFor="descSelector">설명 CSS 선택자</Label>
+                        <Input id="descSelector" value={newSource.descSelector} onChange={(e) => setNewSource({...newSource, descSelector: e.target.value})} placeholder="예: .event-description" />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -343,6 +336,18 @@ export const EventSourceManager = () => {
               <div className="grid gap-2">
                 <Label htmlFor="edit-periodDataAttr">이벤트기간 data attribute</Label>
                 <Input id="edit-periodDataAttr" value={editSource.period_data_attr} onChange={e => setEditSource({ ...editSource, period_data_attr: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-timeSelector">시간 CSS 선택자</Label>
+                <Input id="edit-timeSelector" value={editSource.time_selector} onChange={e => setEditSource({ ...editSource, time_selector: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-locationSelector">장소 CSS 선택자</Label>
+                <Input id="edit-locationSelector" value={editSource.location_selector} onChange={e => setEditSource({ ...editSource, location_selector: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-descSelector">설명 CSS 선택자</Label>
+                <Input id="edit-descSelector" value={editSource.desc_selector} onChange={e => setEditSource({ ...editSource, desc_selector: e.target.value })} />
               </div>
             </div>
             <div className="flex justify-end gap-2">

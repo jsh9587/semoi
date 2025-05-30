@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer');
 
 // puppeteer 기반 크롤링 + DB 저장 API
 router.post('/puppeteer-crawl-and-save', async (req, res) => {
-  const { sourceId, url, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr } = req.body;
+  const { sourceId, url, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector } = req.body;
   if (!url || !sourceId) return res.status(400).json({ error: 'url, sourceId 파라미터 필요' });
 
   let browser;
@@ -16,7 +16,7 @@ router.post('/puppeteer-crawl-and-save', async (req, res) => {
     await new Promise(r => setTimeout(r, 2000)); // 렌더링 대기
 
     // 데이터 추출
-    const results = await page.evaluate((titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr) => {
+    const results = await page.evaluate((titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector) => {
       function getAttrOrText(el, attr) {
         if (!el) return null;
         if (attr) return el.getAttribute(attr) || el.textContent.trim();
@@ -35,17 +35,26 @@ router.post('/puppeteer-crawl-and-save', async (req, res) => {
             period = periodDataAttr ? el.getAttribute(periodDataAttr) || el.textContent.trim() : el.textContent.trim();
           }
         }
-        return { title, price, link, image, period };
+        const time = timeSelector ? document.querySelectorAll(timeSelector)[i]?.textContent.trim() : null;
+        const location = locationSelector ? document.querySelectorAll(locationSelector)[i]?.textContent.trim() : null;
+        const description = descSelector ? document.querySelectorAll(descSelector)[i]?.textContent.trim() : null;
+        return { title, price, link, image, period, time, location, description };
       });
-    }, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr);
+    }, titleSelector, priceSelector, linkSelector, imageSelector, periodSelector, periodDataAttr, timeSelector, locationSelector, descSelector);
 
-    // DB 저장 (최대 10개)
+    // DB 저장 (최대 10개, 중복 타이틀/링크는 건너뜀)
     const conn = await pool.getConnection();
     for (let i = 0; i < results.length && i < 10; i++) {
-      const { title, price, link, image, period } = results[i];
+      const { title, price, link, image, period, time, location, description } = results[i];
+      // 중복 체크: 같은 source_id, title, link가 이미 있으면 건너뜀
+      const [dups] = await conn.query(
+        `SELECT id FROM crawled_events WHERE source_id=? AND title=? AND link=?`,
+        [sourceId, title, link]
+      );
+      if (dups.length > 0) continue;
       await conn.query(
-        `INSERT INTO crawled_events (source_id, title, price, link, image, period, raw_json) VALUES (?, ?, ?, ?, ?, ?, ?)` ,
-        [sourceId, title, price, link, image, period, JSON.stringify(results[i])]
+        `INSERT INTO crawled_events (source_id, title, price, link, image, period, time, location, description, raw_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+        [sourceId, title, price, link, image, period, time, location, description, JSON.stringify(results[i])]
       );
     }
     conn.release();
