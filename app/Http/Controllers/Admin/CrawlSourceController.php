@@ -73,15 +73,25 @@ class CrawlSourceController extends Controller
             'name' => 'required|string|max:255',
             'source_url' => 'required|url|max:255',
             'fields' => 'nullable|array',
+            'deleted_fields' => 'nullable|array',
         ]);
 
         $source->update($request->only('name', 'source_url', 'is_active'));
 
-        $source->fields()->delete();
+        if ($request->has('deleted_fields')) {
+            CrawlTargetField::destroy($request->deleted_fields);
+        }
 
         if ($request->has('fields')) {
             foreach ($request->fields as $fieldData) {
-                $source->fields()->create($fieldData);
+                if (isset($fieldData['id'])) {
+                    $field = CrawlTargetField::find($fieldData['id']);
+                    if ($field) {
+                        $field->update($fieldData);
+                    }
+                } else {
+                    $source->fields()->create($fieldData);
+                }
             }
         }
 

@@ -31,6 +31,7 @@
                 <div id="target-fields-container" class="mt-4 space-y-4">
                     @foreach ($source->fields as $field)
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
+                            <input type="hidden" name="fields[{{ $loop->index }}][id]" value="{{ $field->id }}">
                             <div>
                                 <label for="fields[{{ $loop->index }}][field_name]" class="block text-sm font-medium text-gray-700">Field Name</label>
                                 <input type="text" name="fields[{{ $loop->index }}][field_name]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ $field->field_name }}" required>
@@ -50,7 +51,7 @@
                                 <label for="fields[{{ $loop->index }}][attribute]" class="block text-sm font-medium text-gray-700">Attribute (Optional)</label>
                                 <input type="text" name="fields[{{ $loop->index }}][attribute]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ $field->attribute }}">
                             </div>
-                            <button type="button" class="px-2 py-1 text-sm font-medium text-red-600 hover:text-red-900 focus:outline-none">Remove</button>
+                            <button type="button" data-field-id="{{ $field->id }}" class="px-2 py-1 text-sm font-medium text-red-600 remove-field-btn hover:text-red-900 focus:outline-none">Remove</button>
                         </div>
                     @endforeach
                 </div>
@@ -127,7 +128,15 @@
         });
 
         targetFieldsContainer.addEventListener('click', function (e) {
-            if (e.target.tagName === 'BUTTON' && e.target.textContent === 'Remove') {
+            if (e.target.classList.contains('remove-field-btn')) {
+                const fieldId = e.target.dataset.fieldId;
+                if (fieldId) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'deleted_fields[]';
+                    hiddenInput.value = fieldId;
+                    targetFieldsContainer.appendChild(hiddenInput);
+                }
                 e.target.parentElement.remove();
             }
         });
