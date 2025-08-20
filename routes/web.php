@@ -19,6 +19,7 @@ Route::resource('admin/sources/{source}/fields', CrawlTargetFieldController::cla
 
 // Selector Validation Route
 Route::post('admin/validate-selector', [SelectorValidationController::class, 'validateSelector']); // Add this line
+Route::get('/admin/test-puppeteer', [SelectorValidationController::class, 'testPuppeteer']); // 테스트용
 
 // Content Review Routes
 Route::get('admin/review', [ContentReviewController::class, 'index'])->name('admin.review.index');
