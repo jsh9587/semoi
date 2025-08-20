@@ -47,6 +47,7 @@ const fs = require('fs');
             handleSIGINT: false,
             handleSIGTERM: false,
             handleSIGHUP: false,
+            executablePath: puppeteer.executablePath(), // Puppeteer가 제공하는 Chromium 경로
             // Chrome 실행 파일 경로를 명시적으로 지정 (필요시)
             // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
         });

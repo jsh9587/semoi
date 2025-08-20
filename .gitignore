@@ -24,3 +24,4 @@ Homestead.yaml
 Thumbs.db
 puppeteer-service/tmp/
 tmp/
+puppeteer-service/chrome-user-data
