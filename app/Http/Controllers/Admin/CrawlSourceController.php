@@ -33,9 +33,16 @@ class CrawlSourceController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'source_url' => 'required|url|max:255',
+            'fields' => 'nullable|array',
         ]);
 
-        CrawlSource::create($request->all());
+        $source = CrawlSource::create($request->only('name', 'source_url', 'is_active'));
+
+        if ($request->has('fields')) {
+            foreach ($request->fields as $fieldData) {
+                $source->fields()->create($fieldData);
+            }
+        }
 
         return redirect()->route('admin.sources.index')
                          ->with('success', 'Crawl source created successfully.');
@@ -65,9 +72,18 @@ class CrawlSourceController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'source_url' => 'required|url|max:255',
+            'fields' => 'nullable|array',
         ]);
 
-        $source->update($request->all());
+        $source->update($request->only('name', 'source_url', 'is_active'));
+
+        $source->fields()->delete();
+
+        if ($request->has('fields')) {
+            foreach ($request->fields as $fieldData) {
+                $source->fields()->create($fieldData);
+            }
+        }
 
         return redirect()->route('admin.sources.index')
                          ->with('success', 'Crawl source updated successfully.');
