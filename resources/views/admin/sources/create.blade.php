@@ -60,5 +60,37 @@
         <div id="validator-result" class="mt-4"></div>
     </div>
 </div>
+<script>
+$('#validate-selector-btn').click(function() {
+    const url = $('#validator_source_url').val();
+    const type = $('#validator_selector_type').val();
+    const value = $('#validator_selector_value').val();
 
+    // 1️⃣ Job 실행
+    $.post("{{ route('admin.validate-selector') }}", {
+        _token: "{{ csrf_token() }}",
+        url: url,
+        selector_type: type,
+        selector_value: value
+    }, function(response) {
+        if (response.status === 'processing') {
+            $('#validator-result').html('검사 중... Queue에서 실행 중');
+
+            // 2️⃣ Polling
+            let interval = setInterval(function() {
+                $.post("{{ route('admin.validate-selector-check') }}", {
+                    _token: "{{ csrf_token() }}",
+                    url: url,
+                    selector_value: value
+                }, function(pollResponse) {
+                    if (pollResponse.status === 'completed') {
+                        $('#validator-result').html('결과: ' + pollResponse.result.extracted_content);
+                        clearInterval(interval);
+                    }
+                });
+            }, 2000);
+        }
+    });
+});
+</script>
 @endsection

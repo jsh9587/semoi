@@ -1,13 +1,14 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use App\Jobs\ValidateSelectorJob;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 
-class SelectorValidationController extends Controller
-{
+    class SelectorValidationController extends Controller
+    {
+        // Queue에 Job 보내기
     public function validateSelector(Request $request)
     {
         $request->validate([
@@ -16,81 +17,44 @@ class SelectorValidationController extends Controller
             'selector_value' => 'required|string',
         ]);
 
-        $url = $request->input('url');
-        $selectorType = $request->input('selector_type');
-        $selectorValue = $request->input('selector_value');
+        $cacheKey = 'selector_result_' . md5($request->url . $request->selector_value);
 
-        $nodePath = 'node';
-        $scriptPath = base_path('puppeteer-service/selector-validator.js');
+        ValidateSelectorJob::dispatch(
+            $request->url,
+            $request->selector_type,
+            $request->selector_value,
+            $cacheKey
+        );
 
-        if (!file_exists($scriptPath)) {
-            Log::error('Puppeteer script not found: ' . $scriptPath);
-            return response()->json(['error' => 'Puppeteer 서비스 스크립트를 찾을 수 없습니다.'], 500);
-        }
+        return response()->json(['status' => 'processing', 'cache_key' => $cacheKey]);
+    }
 
-        $cmd = escapeshellarg($nodePath) . ' ' .
-               escapeshellarg($scriptPath) . ' ' .
-               escapeshellarg($url) . ' ' .
-               escapeshellarg($selectorType) . ' ' .
-               escapeshellarg($selectorValue);
 
-        $descriptors = [
-            1 => ['pipe', 'w'], // stdout
-            2 => ['pipe', 'w'], // stderr
-        ];
-
-        $process = proc_open($cmd, $descriptors, $pipes, base_path(), [
-            'NODE_ENV' => 'production',
-            'PUPPETEER_SKIP_CHROMIUM_DOWNLOAD' => 'false',
-            'CHROME_PATH' => 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    // Polling해서 결과 가져오기
+    public function check(Request $request)
+    {
+        $request->validate([
+            'url' => 'required|url',
+            'selector_value' => 'required|string',
         ]);
 
-        if (!is_resource($process)) {
-            return response()->json(['error' => 'Node 프로세스를 실행할 수 없습니다.'], 500);
-        }
+        $cacheKey = 'selector_result_' . md5($request->url . $request->selector_value);
 
-        $stdout = '';
-        $stderr = '';
+        if (Cache::has($cacheKey)) {
+            $output = Cache::get($cacheKey);
 
-        // 비동기 실시간 출력
-        while (!feof($pipes[1]) || !feof($pipes[2])) {
-            if (!feof($pipes[1])) {
-                $stdout .= fread($pipes[1], 8192);
+            // Puppeteer 결과가 JSON이면 decode
+            $result = json_decode($output, true);
+            if (!$result) {
+                $result = ['extracted_content' => $output];
             }
-            if (!feof($pipes[2])) {
-                $stderr .= fread($pipes[2], 8192);
-            }
-        }
 
-        foreach ($pipes as $pipe) {
-            fclose($pipe);
-        }
-
-        $exitCode = proc_close($process);
-
-        Log::info('Puppeteer process finished', [
-            'exit_code' => $exitCode,
-            'stdout' => $stdout,
-            'stderr' => $stderr,
-        ]);
-
-        if ($exitCode !== 0) {
             return response()->json([
-                'error' => 'Puppeteer 실행 중 오류가 발생했습니다.',
-                'stderr' => $stderr
-            ], 500);
+                'status' => 'completed',
+                'result' => $result
+            ]);
         }
 
-        $output = json_decode($stdout, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json([
-                'error' => '잘못된 JSON 응답',
-                'raw_stdout' => $stdout,
-                'raw_stderr' => $stderr
-            ], 500);
-        }
-
-        return response()->json($output);
+        return response()->json(['status' => 'processing']);
     }
 }
