@@ -30,6 +30,7 @@
 
             <div class="mt-6">
                 <h2 class="text-lg font-semibold text-gray-700">Target Fields</h2>
+                <p class="mt-1 text-sm text-gray-600">크롤링할 웹 페이지에서 추출할 데이터 항목들을 정의합니다. 각 필드는 고유한 이름과 해당 데이터를 찾기 위한 선택자(CSS 또는 XPath)를 가집니다.</p>
                 <div id="target-fields-container" class="mt-4 space-y-4">
                     @foreach ($source->fields as $field)
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
@@ -69,6 +70,7 @@
 
     <div class="mt-8">
         <h2 class="text-lg font-semibold text-gray-700">Selector Validator</h2>
+        <p class="mt-1 text-sm text-gray-600">정의한 선택자(Selector)가 웹 페이지에서 올바른 데이터를 추출하는지 테스트합니다. Source URL, Selector Type, Selector Value를 입력하고 'Test' 버튼을 눌러 결과를 확인하세요.</p>
         <div class="grid grid-cols-1 gap-6 mt-4 sm:grid-cols-3">
             <div>
                 <label for="validator_source_url" class="block text-sm font-medium text-gray-700">Source URL</label>
