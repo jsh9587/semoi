@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CrawlSource; // Add this line
+use App\Models\CrawlTargetField;
 
 class CrawlSourceController extends Controller
 {
@@ -38,11 +39,7 @@ class CrawlSourceController extends Controller
 
         $source = CrawlSource::create($request->only('name', 'source_url', 'is_active'));
 
-        if ($request->has('fields')) {
-            foreach ($request->fields as $fieldData) {
-                $source->fields()->create($fieldData);
-            }
-        }
+        $this->syncFields($request, $source);
 
         return redirect()->route('admin.sources.index')
                          ->with('success', 'Crawl source created successfully.');
@@ -78,6 +75,25 @@ class CrawlSourceController extends Controller
 
         $source->update($request->only('name', 'source_url', 'is_active'));
 
+        $this->syncFields($request, $source);
+
+        return redirect()->route('admin.sources.index')
+                         ->with('success', 'Crawl source updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(CrawlSource $source)
+    {
+        $source->delete();
+
+        return redirect()->route('admin.sources.index')
+                         ->with('success', 'Crawl source deleted successfully.');
+    }
+
+    private function syncFields(Request $request, CrawlSource $source)
+    {
         if ($request->has('deleted_fields')) {
             CrawlTargetField::destroy($request->deleted_fields);
         }
@@ -94,19 +110,5 @@ class CrawlSourceController extends Controller
                 }
             }
         }
-
-        return redirect()->route('admin.sources.index')
-                         ->with('success', 'Crawl source updated successfully.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(CrawlSource $source)
-    {
-        $source->delete();
-
-        return redirect()->route('admin.sources.index')
-                         ->with('success', 'Crawl source deleted successfully.');
     }
 }

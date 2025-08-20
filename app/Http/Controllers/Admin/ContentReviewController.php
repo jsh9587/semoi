@@ -16,19 +16,20 @@ class ContentReviewController extends Controller
 
     public function approve($eventId)
     {
-        $event = Event::findOrFail($eventId);
-        $event->status = 'approved';
-        $event->save();
-
+        $this->updateStatus($eventId, 'approved');
         return redirect()->route('admin.review.index')->with('success', 'Event approved successfully.');
     }
 
     public function reject($eventId)
     {
-        $event = Event::findOrFail($eventId);
-        $event->status = 'rejected';
-        $event->save();
-
+        $this->updateStatus($eventId, 'rejected');
         return redirect()->route('admin.review.index')->with('success', 'Event rejected successfully.');
+    }
+
+    private function updateStatus($eventId, $status)
+    {
+        $event = Event::findOrFail($eventId);
+        $event->status = $status;
+        $event->save();
     }
 }
