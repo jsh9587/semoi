@@ -10,11 +10,13 @@
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                    <input type="text" name="name" id="name" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    <input type="text" name="name" id="name" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., OnOffMix IT Events" required>
+                    <p class="mt-2 text-sm text-gray-500">A descriptive name for the crawl source.</p>
                 </div>
                 <div>
                     <label for="source_url" class="block text-sm font-medium text-gray-700">Source URL</label>
-                    <input type="url" name="source_url" id="source_url" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    <input type="url" name="source_url" id="source_url" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., https://onoffmix.com/event/main/it" required>
+                    <p class="mt-2 text-sm text-gray-500">The URL of the page to crawl.</p>
                 </div>
             </div>
 

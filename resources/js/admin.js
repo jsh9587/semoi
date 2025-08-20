@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
             newField.innerHTML = `
                 <div>
                     <label for="fields[${fieldIndex}][field_name]" class="block text-sm font-medium text-gray-700">Field Name</label>
-                    <input type="text" name="fields[${fieldIndex}][field_name]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    <input type="text" name="fields[${fieldIndex}][field_name]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., title, start_date, location" required>
                 </div>
                 <div>
                     <label for="fields[${fieldIndex}][selector_type]" class="block text-sm font-medium text-gray-700">Selector Type</label>
@@ -21,11 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div>
                     <label for="fields[${fieldIndex}][selector_value]" class="block text-sm font-medium text-gray-700">Selector Value</label>
-                    <input type="text" name="fields[${fieldIndex}][selector_value]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    <input type="text" name="fields[${fieldIndex}][selector_value]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., h1.event-title, //span[@class='price']" required>
                 </div>
                 <div>
                     <label for="fields[${fieldIndex}][attribute]" class="block text-sm font-medium text-gray-700">Attribute (Optional)</label>
-                    <input type="text" name="fields[${fieldIndex}][attribute]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <input type="text" name="fields[${fieldIndex}][attribute]" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., href, src">
                 </div>
                 <button type="button" class="px-2 py-1 text-sm font-medium text-red-600 remove-field-btn hover:text-red-900 focus:outline-none">Remove</button>
             `;
