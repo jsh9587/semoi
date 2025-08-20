@@ -37,7 +37,9 @@ class CrawlSourceController extends Controller
             'fields' => 'nullable|array',
         ]);
 
-        $source = CrawlSource::create($request->only('name', 'source_url', 'is_active'));
+        $sourceData = $request->only('name', 'source_url');
+        $sourceData['is_active'] = $request->has('is_active');
+        $source = CrawlSource::create($sourceData);
 
         $this->syncFields($request, $source);
 
@@ -73,7 +75,9 @@ class CrawlSourceController extends Controller
             'deleted_fields' => 'nullable|array',
         ]);
 
-        $source->update($request->only('name', 'source_url', 'is_active'));
+        $sourceData = $request->only('name', 'source_url');
+        $sourceData['is_active'] = $request->has('is_active');
+        $source->update($sourceData);
 
         $this->syncFields($request, $source);
 
