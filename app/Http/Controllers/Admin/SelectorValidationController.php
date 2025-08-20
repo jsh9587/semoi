@@ -32,11 +32,18 @@ class SelectorValidationController extends Controller
             $process->run();
 
             if (!$process->isSuccessful()) {
-                Log::error('Puppeteer process stderr: ' . $process->getErrorOutput());
+                \Log::error('Puppeteer process stdout: ' . $process->getOutput());
+                \Log::error('Puppeteer process stderr: ' . $process->getErrorOutput());
                 throw new ProcessFailedException($process);
             }
 
             $output = json_decode($process->getOutput(), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                \Log::error('JSON decoding error: ' . json_last_error_msg());
+                \Log::error('Raw Puppeteer process output: ' . $process->getOutput());
+                return response()->json(['error' => 'Invalid JSON response from Puppeteer service.'], 500);
+            }
 
             if (isset($output['error'])) {
                 return response()->json(['error' => $output['error']], 500);
@@ -45,7 +52,16 @@ class SelectorValidationController extends Controller
             return response()->json(['extracted_content' => $output['extracted_content']]);
 
         } catch (ProcessFailedException $exception) {
-            return response()->json(['error' => 'Process failed: ' . $exception->getMessage()], 500);
+            \Log::error('Puppeteer process failed: ' . $exception->getMessage());
+            \Log::error('Puppeteer process stdout: ' . $exception->getProcess()->getOutput());
+            \Log::error('Puppeteer process stderr: ' . $exception->getProcess()->getErrorOutput());
+
+            // Check if the error is due to an invalid URL or other client-side issue
+            if (str_contains($exception->getProcess()->getErrorOutput(), 'Cannot navigate to invalid URL')) {
+                return response()->json(['error' => '유효하지 않은 URL입니다. 올바른 URL을 입력해주세요.'], 422);
+            }
+
+            return response()->json(['error' => '셀렉터 유효성 검사 중 오류가 발생했습니다. 관리자에게 문의하세요.'], 500);
         } catch (\Exception $e) {
             return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
