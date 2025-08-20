@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http; // For making HTTP requests
 use Symfony\Component\DomCrawler\Crawler; // For HTML parsing
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class SelectorValidationController extends Controller
 {
@@ -25,34 +27,23 @@ class SelectorValidationController extends Controller
         $selectorValue = $request->input('selector_value');
 
         try {
-            // Make HTTP request to the target URL
-            $response = Http::get($url);
+            $process = new Process(['node', base_path('puppeteer-service/selector-validator.js'), $url, $selectorType, $selectorValue]);
+            $process->run();
 
-            if ($response->failed()) {
-                return response()->json(['error' => 'Failed to fetch URL content.'], 500);
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
             }
 
-            $html = $response->body();
+            $output = json_decode($process->getOutput(), true);
 
-            // Use DomCrawler to parse HTML
-            $crawler = new Crawler($html);
-
-            $extractedContent = '';
-
-            if ($selectorType === 'css') {
-                $node = $crawler->filter($selectorValue)->first();
-                if ($node->count() > 0) {
-                    $extractedContent = $node->text();
-                }
-            } elseif ($selectorType === 'xpath') {
-                $node = $crawler->filterXPath($selectorValue)->first();
-                if ($node->count() > 0) {
-                    $extractedContent = $node->text();
-                }
+            if (isset($output['error'])) {
+                return response()->json(['error' => $output['error']], 500);
             }
 
-            return response()->json(['extracted_content' => $extractedContent]);
+            return response()->json(['extracted_content' => $output['extracted_content']]);
 
+        } catch (ProcessFailedException $exception) {
+            return response()->json(['error' => 'Process failed: ' . $exception->getMessage()], 500);
         } catch (\Exception $e) {
             return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
