@@ -12,7 +12,7 @@ const puppeteer = require('puppeteer');
 
     let browser;
     try {
-        browser = await puppeteer.launch({ headless: true });
+        browser = await puppeteer.launch({ headless: true, userDataDir: './tmp' });
         const page = await browser.newPage();
 
         await page.goto(url, { waitUntil: 'networkidle2' });
