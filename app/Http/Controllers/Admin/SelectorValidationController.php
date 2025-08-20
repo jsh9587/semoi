@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http; // For making HTTP requests
 use Symfony\Component\DomCrawler\Crawler; // For HTML parsing
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Illuminate\Support\Facades\Log;
 
 class SelectorValidationController extends Controller
 {
@@ -31,6 +32,7 @@ class SelectorValidationController extends Controller
             $process->run();
 
             if (!$process->isSuccessful()) {
+                Log::error('Puppeteer process stderr: ' . $process->getErrorOutput());
                 throw new ProcessFailedException($process);
             }
 

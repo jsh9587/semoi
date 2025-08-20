@@ -25,16 +25,25 @@ const puppeteer = require('puppeteer');
                 extractedContent = await page.evaluate(el => el.innerText, element);
             }
         } else if (selectorType === 'xpath') {
-            const elements = await page.$x(selectorValue);
+            const elements = await page.evaluate((selectorValue) => {
+                const iterator = document.evaluate(selectorValue, document, null, XPathResult.ANY_TYPE, null);
+                const results = [];
+                let node = iterator.iterateNext();
+                while (node) {
+                    results.push(node.innerText);
+                    node = iterator.iterateNext();
+                }
+                return results;
+            }, selectorValue);
             if (elements.length > 0) {
-                extractedContent = await page.evaluate(el => el.innerText, elements[0]);
+                extractedContent = elements[0];
             }
         }
 
         console.log(JSON.stringify({ extracted_content: extractedContent }));
 
     } catch (error) {
-        console.error(JSON.stringify({ error: error.message }));
+        console.error(JSON.stringify({ error: error.message, stack: error.stack }));
         process.exit(1);
     } finally {
         if (browser) {
